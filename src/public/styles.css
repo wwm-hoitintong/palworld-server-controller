@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --panel: #151c25;
+  --panel-soft: #1b2530;
+  --line: #293542;
+  --text: #edf3f7;
+  --muted: #8c9aa8;
+  --green: #83e6a3;
+  --cyan: #70d6e8;
+  --red: #ff7f86;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(circle at 80% -20%, #23323e 0, transparent 42%), var(--bg); color: var(--text); font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+.shell { max-width: 1180px; margin: auto; padding: 44px 28px 70px; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 34px; }
+.eyebrow, .panel-heading { color: var(--cyan); font-size: 11px; font-weight: 750; letter-spacing: .16em; }
+h1 { margin: 7px 0 5px; font-size: clamp(28px, 4vw, 44px); letter-spacing: -.04em; }
+h2 { margin: 22px 0 5px; font-size: 24px; letter-spacing: -.025em; }
+.muted, .hint, label { color: var(--muted); }
+.connection { display: flex; align-items: center; gap: 8px; color: var(--green); font-weight: 650; white-space: nowrap; padding-top: 6px; }
+.topbar-tools { display: grid; gap: 18px; justify-items: end; }.refresh-controls { align-items: center; display: flex; gap: 10px; }.refresh-controls label { align-items: center; display: flex; gap: 7px; font-size: 12px; }.refresh-controls select { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 5px; color: var(--text); padding: 7px 8px; }.button.compact { background: var(--panel-soft); border: 1px solid var(--line); color: var(--text); font-size: 12px; padding: 7px 10px; }
+#connection-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px var(--green); }
+#connection-dot.offline { background: var(--red); box-shadow: 0 0 14px var(--red); }
+.hero-grid, .content-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; margin-bottom: 18px; }
+.panel { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: 14px; padding: 23px; box-shadow: 0 14px 40px #00000016; }
+.panel-heading { display: flex; align-items: center; gap: 9px; }
+.icon { color: var(--green); font-size: 16px; }
+.tag { margin-left: auto; background: #24323c; border-radius: 5px; padding: 3px 8px; font-size: 10px; color: var(--muted); letter-spacing: .04em; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 28px; border-top: 1px solid var(--line); margin-top: 26px; padding-top: 20px; }.metrics-panel { margin-bottom: 18px; }.metrics-panel .stats { border-top: 0; margin-top: 0; padding-top: 16px; }.host-panel { margin-bottom: 18px; }.host-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 28px; margin-top: 16px; }.host-stats div { display: grid; gap: 1px; }.host-stats strong { font-size: 20px; }.host-stats span { color: var(--muted); font-size: 12px; }.schedule-panel { margin-bottom: 18px; }.schedule-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; margin-top: 16px; }.schedule-grid div { display: grid; gap: 1px; }.schedule-grid strong { font-size: 18px; }.schedule-grid span { color: var(--muted); font-size: 12px; }.tag.active { color: var(--green); }
+.stats div { display: grid; gap: 1px; }.stats strong { font-size: 22px; }.stats span { color: var(--muted); font-size: 12px; }
+.action-card { display: flex; flex-direction: column; }.action-row { display: flex; gap: 10px; margin-top: auto; padding-top: 35px; }
+.button { border: 0; border-radius: 7px; color: #071014; cursor: pointer; font: inherit; font-weight: 750; padding: 11px 17px; transition: transform .15s, filter .15s; }
+.button:hover, .mini-button:hover { filter: brightness(1.12); transform: translateY(-1px); }.button.primary { background: var(--cyan); }.button.secondary { background: var(--green); }.button.danger { background: #ff9b9f; }.hint { font-size: 12px; margin: 15px 0 0; }
+
+.players-panel { min-height: 300px; }.panel-end { margin-left: auto; font-size: 11px; }.players-list { margin-top: 15px; }.player { align-items: center; border-top: 1px solid var(--line); display: flex; gap: 12px; padding: 13px 0; }.avatar { align-items: center; background: #28404a; border-radius: 8px; color: var(--cyan); display: flex; font-weight: 800; height: 34px; justify-content: center; width: 34px; }.player-name { display: grid; gap: 1px; min-width: 0; }.player-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.player-name span { color: var(--muted); font-size: 11px; }.player-actions { display: flex; gap: 6px; margin-left: auto; }.mini-button { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 5px; color: var(--text); cursor: pointer; font-size: 11px; padding: 5px 8px; }.mini-button.ban { color: var(--red); }.empty { color: var(--muted); padding: 42px 0; text-align: center; }
+.broadcast-panel { display: flex; flex-direction: column; gap: 12px; }.broadcast-panel label { font-size: 12px; margin-top: 12px; }.broadcast-panel textarea { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 7px; color: var(--text); font: inherit; padding: 11px; resize: vertical; }.broadcast-panel textarea:focus { border-color: var(--cyan); outline: none; }.broadcast-panel .button { align-self: flex-start; margin-top: 2px; }
+.toast { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 7px; bottom: 24px; left: 50%; opacity: 0; padding: 12px 17px; pointer-events: none; position: fixed; transform: translate(-50%, 15px); transition: .2s; }.toast.visible { opacity: 1; transform: translate(-50%, 0); }.toast.error { border-color: var(--red); color: var(--red); }
+@media (max-width: 760px) { .shell { padding: 28px 16px 55px; }.topbar { flex-direction: column; margin-bottom: 24px; }.topbar-tools { justify-items: start; width: 100%; }.hero-grid, .content-grid { grid-template-columns: 1fr; }.stats, .host-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }.stats strong, .host-stats strong { font-size: 18px; }.action-row { margin-top: 0; padding-top: 24px; } }

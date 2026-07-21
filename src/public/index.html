@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Palworld Control Room</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PALWORLD / CONTROL ROOM</p>
+        <h1>Server command center</h1>
+        <p class="muted">Monitor your world and run essential admin actions.</p>
+      </div>
+      <div class="topbar-tools">
+        <div class="connection"><span id="connection-dot"></span><span id="connection-label">Connecting</span></div>
+        <div class="refresh-controls"><button id="refresh-button" class="button compact">Refresh now</button><label for="refresh-interval">Auto refresh <select id="refresh-interval"><option value="0">Off</option><option value="10">10 sec</option><option value="30" selected>30 sec</option><option value="60">1 min</option><option value="300">5 min</option></select></label></div>
+      </div>
+    </header>
+
+    <section class="hero-grid">
+      <article class="panel server-card">
+        <div class="panel-heading"><span class="icon">✦</span><span>WORLD STATUS</span><span id="server-version" class="tag">—</span></div>
+        <h2 id="server-name">Loading server...</h2>
+        <p id="server-description" class="muted">Fetching server information</p>
+      </article>
+      <article class="panel action-card">
+        <div class="panel-heading"><span class="icon">⚡</span><span>QUICK ACTIONS</span></div>
+        <div class="action-row"><button id="start-button" class="button primary">Start server</button><button data-action="save" class="button secondary">Save world</button><button id="shutdown-button" class="button danger">Shutdown</button></div>
+        <p class="hint">Start launches the configured Palworld executable. Shutdown asks how many minutes to wait before stopping.</p>
+      </article>
+    </section>
+
+    <section class="panel metrics-panel">
+      <div class="panel-heading"><span class="icon">◌</span><span>SERVER METRICS</span><span id="metrics-updated" class="muted panel-end">—</span></div>
+      <div class="stats"><div><strong id="uptime">—</strong><span>Uptime</span></div><div><strong id="player-count">—</strong><span>Players online</span></div><div><strong id="fps">—</strong><span>Server FPS</span></div><div><strong id="frame-time">—</strong><span>Frame time</span></div><div><strong id="basecamps">—</strong><span>Base camps</span></div><div><strong id="world-days">—</strong><span>World days</span></div></div>
+    </section>
+
+    <section class="panel host-panel">
+      <div class="panel-heading"><span class="icon">▣</span><span>HOST RESOURCES</span><span id="host-updated" class="muted panel-end">—</span></div>
+      <div class="host-stats"><div><strong id="host-cpu">—</strong><span>CPU usage</span></div><div><strong id="host-memory">—</strong><span>Memory usage</span></div><div><strong id="host-rx">—</strong><span>Network receive</span></div><div><strong id="host-tx">—</strong><span>Network transmit</span></div></div>
+      <p id="host-status" class="hint">Reading resources from the machine running this Node.js dashboard.</p>
+    </section>
+
+    <section class="panel schedule-panel">
+      <div class="panel-heading"><span class="icon">◷</span><span>AUTOMATIC SCHEDULE</span><span id="schedule-status" class="tag">Disabled</span></div>
+      <div class="schedule-grid"><div><strong id="next-start">—</strong><span>Next random start</span></div><div><strong id="next-stop">—</strong><span>Next random stop</span></div></div>
+      <p id="schedule-hint" class="hint">Enable PALWORLD_SCHEDULE_ENABLED in .env to activate this schedule.</p>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel players-panel">
+        <div class="panel-heading"><span class="icon">♙</span><span>PLAYERS</span><span id="last-updated" class="muted panel-end">—</span></div>
+        <div id="players" class="players-list"><div class="empty">Loading players...</div></div>
+      </article>
+      <article class="panel broadcast-panel">
+        <div class="panel-heading"><span class="icon">◈</span><span>BROADCAST</span></div>
+        <label for="announcement">Message to all players</label>
+        <textarea id="announcement" rows="4" maxlength="200" placeholder="Server message..."></textarea>
+        <button id="announce-button" class="button primary">Send announcement</button>
+      </article>
+    </section>
+
+    <div id="toast" class="toast" role="status"></div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

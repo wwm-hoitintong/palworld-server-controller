@@ -1,0 +1,17 @@
+{
+  "name": "palworld-server-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A small Node.js dashboard for managing a Palworld dedicated server.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
