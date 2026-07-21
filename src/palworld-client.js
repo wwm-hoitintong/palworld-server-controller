@@ -32,11 +32,30 @@ const waitForReady = async (endpoints, request, timeoutMs = 300_000) => {
     throw new Error('Palworld server did not become ready within 5 minutes');
 };
 
+const waitForOffline = async (endpoints, request, timeoutMs = 120_000) => {
+    const deadline = Date.now() + timeoutMs;
+    let transportFailures = 0;
+    while (Date.now() < deadline) {
+        try {
+            await request(endpoints.info);
+            transportFailures = 0;
+        } catch (error) {
+            if (!error.status) {
+                transportFailures += 1;
+                if (transportFailures >= 2) return;
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+    throw new Error('Palworld REST API did not go offline before the save timeout');
+};
+
 const createPalworldClient = ({ config, endpoints }) => {
     const request = call.bind(null, config, endpoints);
     return {
         call: request,
-        waitForReady: waitForReady.bind(null, endpoints, request)
+        waitForReady: waitForReady.bind(null, endpoints, request),
+        waitForOffline: waitForOffline.bind(null, endpoints, request)
     };
 };
 

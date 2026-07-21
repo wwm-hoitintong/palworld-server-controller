@@ -58,6 +58,15 @@ const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client,
                 });
             }
         }
+        if (url.pathname === '/api/settings' && request.method === 'POST') {
+            const body = await readJson(request);
+            try {
+                const result = await palworldSettings.stageSettings(body.changes);
+                return sendJson(response, 202, { ok: true, ...result });
+            } catch (error) {
+                return sendJson(response, 400, { error: error.message });
+            }
+        }
         if (url.pathname === '/api/action' && request.method === 'POST') {
             const body = await readJson(request);
             const { action, ...payload } = body;
@@ -74,16 +83,20 @@ const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client,
                 return sendJson(response, 200, { ok: true, data: result });
             }
             if (!endpoints[action] || endpoints[action].method !== 'POST') return sendJson(response, 400, { error: 'Unsupported action' });
-            if (isDemoAction(action, config, endpoints)) return sendJson(response, 200, { ok: true, demo: true, data: { action, payload } });
             if (action === 'shutdown') {
                 const waittime = Number(payload.waittime);
                 if (!Number.isInteger(waittime) || waittime < 1 || waittime > 86_400) {
                     return sendJson(response, 400, { error: 'Shutdown delay must be a whole number of seconds between 1 and 86400' });
                 }
+                if (config.demoMode) {
+                    shutdownController.schedule(waittime, { notices: false });
+                    return sendJson(response, 200, { ok: true, demo: true, data: { action, waittime } });
+                }
                 const data = await client.call(endpoints[action], { waittime });
                 shutdownController.schedule(waittime);
                 return sendJson(response, 200, { ok: true, data });
             }
+            if (isDemoAction(action, config, endpoints)) return sendJson(response, 200, { ok: true, demo: true, data: { action, payload } });
             return sendJson(response, 200, { ok: true, data: await client.call(endpoints[action], payload) });
         }
         if (url.pathname.startsWith('/api/')) return sendJson(response, 404, { error: 'API route not found' });

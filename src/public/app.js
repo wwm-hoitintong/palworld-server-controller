@@ -1,5 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
-const state = { players: [], refreshTimer: null, refreshInterval: 30_000 };
+const state = { players: [], refreshTimer: null, refreshInterval: 30_000, settingsDraft: null };
 
 const escapeHtml = (value = '') => {
     return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
@@ -54,7 +54,7 @@ const renderStatus = (status) => {
     renderPlayers(status.players, metrics.maxplayernum);
     renderHost(status.host);
     renderSchedule(status.schedule);
-    renderServerSettings(status.settings);
+    renderServerSettings(status.settings, status.demo);
     const updated = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     $('#metrics-updated').textContent = updated;
     $('#last-updated').textContent = updated;
@@ -117,19 +117,44 @@ const formatMetric = (metric, unit) => {
     return Number.isFinite(numeric) ? `${numeric.toFixed(numeric % 1 ? 1 : 0)} ${unit}` : '—';
 };
 
-const renderServerSettings = (settings = {}) => {
+const isSensitiveSetting = (key) => /password|secret|token/i.test(key);
+
+const collectSettingsChanges = () => Object.fromEntries([...document.querySelectorAll('#server-settings [data-setting-key]')]
+    .map((input) => [input.dataset.settingKey, input.value])
+    .filter(([key, value]) => !isSensitiveSetting(key) || value));
+
+const renderServerSettings = (settings = {}, demo = false) => {
     const entries = Object.entries(settings.values || {}).sort(([left], [right]) => left.localeCompare(right));
     $('#server-settings-status').textContent = settings.available ? `${entries.length} settings` : 'Unavailable';
     $('#server-settings-path').textContent = settings.path ? `Source: ${settings.path}` : (settings.error || 'Settings file unavailable');
+    $('#settings-pending').textContent = settings.pending ? 'Changes staged; waiting for shutdown.' : 'Changes are written after Palworld is confirmed offline.';
+    $('#stage-settings-button').disabled = !settings.available;
     if (!settings.available) {
         $('#server-settings').innerHTML = `<div class="empty">${escapeHtml(settings.error || 'PalWorldSettings.ini is unavailable.')}</div>`;
         return;
     }
+    const draft = state.settingsDraft || {};
+    const redactedKeys = new Set(settings.redactedKeys || []);
     $('#server-settings').innerHTML = entries.map(([key, rawValue]) => {
-        const sensitive = /password|secret|token/i.test(key);
-        const displayValue = sensitive ? (rawValue ? 'Configured' : 'Not configured') : rawValue;
-        return `<div class="setting-item"><span>${escapeHtml(key)}</span><strong>${escapeHtml(displayValue || '—')}</strong></div>`;
+        const sensitive = isSensitiveSetting(key);
+        const displayValue = Object.hasOwn(draft, key) ? draft[key] : (sensitive ? '' : rawValue);
+        const placeholder = sensitive ? (redactedKeys.has(key) ? 'Configured; enter a replacement' : 'Not configured') : '';
+        return `<div class="setting-item"><label for="setting-${escapeHtml(key)}">${escapeHtml(key)}</label><input id="setting-${escapeHtml(key)}" class="setting-input" data-setting-key="${escapeHtml(key)}" type="${sensitive ? 'password' : 'text'}" value="${escapeHtml(displayValue)}" placeholder="${placeholder}"></div>`;
     }).join('');
+};
+
+const stageSettings = async () => {
+    const button = $('#stage-settings-button');
+    button.disabled = true;
+    try {
+        const result = await request('/api/settings', { method: 'POST', body: JSON.stringify({ changes: collectSettingsChanges() }) });
+        state.settingsDraft = null;
+        showToast(result.fileBacked ? 'Settings staged for the next shutdown' : 'Mock settings updated in memory');
+        await refresh();
+    } catch (error) {
+        showToast(error.message, 'error');
+        button.disabled = false;
+    }
 };
 
 const request = async (url, options = {}) => {
@@ -157,6 +182,14 @@ const action = async (action, payload = {}) => {
         await refresh();
     } catch (error) { showToast(error.message, 'error'); }
 };
+$('#server-settings').addEventListener('input', (event) => {
+    const input = event.target.closest('[data-setting-key]');
+    if (!input) return;
+    state.settingsDraft = { ...(state.settingsDraft || {}), [input.dataset.settingKey]: input.value };
+});
+
+$('#stage-settings-button').addEventListener('click', stageSettings);
+
 $('#start-button').addEventListener('click', async () => {
     if (!window.confirm('Launch the configured Palworld server?')) return;
     const button = $('#start-button');

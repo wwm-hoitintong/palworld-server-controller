@@ -2,6 +2,16 @@
 
 A dependency-free Node.js dashboard for a Palworld dedicated server. It starts in demo mode so you can explore the dashboard without a running server. Set `PALWORLD_DEMO_MODE=false` to proxy requests to a real Palworld REST API. Node proxies browser requests server-side, so the admin password is never sent to the browser.
 
+## Demo mode
+
+Demo mode runs without a Palworld process or REST API. Start it explicitly with:
+
+```sh
+PALWORLD_DEMO_MODE=true npm start
+```
+
+The dashboard exposes sample status, player, and metric data. For settings, it uses the configured `PALWORLD_SETTINGS_PATH` when the file exists, while still avoiding all Palworld REST API and process calls. Edits to `PalWorldSettings.ini` are staged and written after the mock shutdown delay completes. If `PALWORLD_SETTINGS_PATH` is empty or the file does not exist, the dashboard reports that the Palworld configuration is unavailable. Demo mode disables the automatic scheduler and never contacts Palworld.
+
 ## Run
 
 1. Copy `.env.example` to `.env` and set `PALWORLD_ADMIN_PASSWORD`.
@@ -24,7 +34,7 @@ Keep this dashboard bound to localhost or place it behind authentication and HTT
 
 ## Automatic schedule
 
-The built-in Windows scheduler is disabled by default. To enable it, set `PALWORLD_SCHEDULE_ENABLED=true`, configure the Palworld executable path and daily time windows, and keep the Node dashboard running. Each dashboard start schedules a random start within `PALWORLD_START_WINDOW` and a random graceful REST shutdown within `PALWORLD_STOP_WINDOW`, using the Windows machine's local time. If the dashboard starts after a window, that event is scheduled for the next day.
+The built-in scheduler is disabled by default. To enable it, set `PALWORLD_SCHEDULE_ENABLED=true`, configure the Palworld executable path and daily time windows, and keep the Node dashboard running. Each dashboard start schedules a random start within `PALWORLD_START_WINDOW` and a random graceful REST shutdown within `PALWORLD_STOP_WINDOW`, using the Windows machine's local time. If the dashboard starts after a window, that event is scheduled for the next day.
 
 ```env
 PALWORLD_DEMO_MODE=false
@@ -37,7 +47,7 @@ PALWORLD_SETTINGS_PATH=C:\PalServer\Pal\Saved\Config\WindowsServer\PalWorldSetti
 PALWORLD_SERVER_ARGS_JSON=[]
 ```
 
-The dashboard also reads the live `PalWorldSettings.ini` file and shows its `OptionSettings` values in the dashboard. `PALWORLD_SETTINGS_PATH` can be customized when the server uses a non-default location; the default follows the server working directory and platform-specific `WindowsServer` or `LinuxServer` folder. Password-like settings are redacted in the browser.
+The dashboard also reads the live `PalWorldSettings.ini` file and shows its `OptionSettings` values in the dashboard. `PALWORLD_SETTINGS_PATH` can be customized when the server uses a non-default location; the default follows the server working directory and platform-specific `WindowsServer` or `LinuxServer` folder. Password-like settings are redacted in the browser. Existing settings can be edited and staged from the dashboard; they are written only after Palworld is confirmed to have shut down, so the server cannot overwrite the changes afterward.
 
 The current schedule is available at `/api/schedule`. The dashboard does not start the scheduler unless explicitly enabled, and it checks the REST API before starting to avoid launching a duplicate server. Use Windows Task Scheduler or a Windows service to start `npm start` at boot if the schedule must survive reboots.
 
