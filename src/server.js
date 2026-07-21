@@ -4,6 +4,7 @@ import { createHostMetrics } from './host-metrics.js';
 import { createNotifications } from './notifications.js';
 import { createPalworldClient } from './palworld-client.js';
 import { createPalworldProcess } from './palworld-process.js';
+import { createPalworldSettings } from './palworld-settings.js';
 import { createRequestHandler } from './routes.js';
 import { createShutdownController } from './shutdown-controller.js';
 import { createScheduler } from './scheduler.js';
@@ -15,6 +16,7 @@ const notifications = createNotifications({
     announceInGame: (message) => client.call(endpoints.announce, { message })
 });
 const processManager = createPalworldProcess({ config, endpoints, client });
+const palworldSettings = createPalworldSettings({ config });
 const shutdownController = createShutdownController({ announceShutdown: notifications.announceShutdown });
 
 const scheduler = createScheduler({
@@ -44,6 +46,7 @@ const requestHandler = createRequestHandler({
     processManager,
     notifications,
     scheduler,
+    palworldSettings,
     shutdownController
 });
 

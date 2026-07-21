@@ -1,3 +1,4 @@
+const shutdownNoticeSeconds = [1800, 600, 300, 30, 1];
 const parseTime = (value, fallback) => {
     const match = String(value || fallback).match(/^(\d{1,2}):(\d{2})$/);
     if (!match) throw new Error(`Invalid schedule time: ${value}`);
@@ -23,7 +24,7 @@ const randomDate = (windowStart, windowEnd, now = new Date(), nextCycle = false)
     return new Date(start.getTime() + Math.floor(Math.random() * (range + 1)));
 };
 
-const shutdownNoticeSeconds = [1800, 600, 300, 30, 1];
+
 
 const scheduleShutdownNotices = ({ delaySeconds, announceShutdown = async () => { }, onError = console.error }) => {
     const timers = shutdownNoticeSeconds

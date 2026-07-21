@@ -54,6 +54,7 @@ const renderStatus = (status) => {
     renderPlayers(status.players, metrics.maxplayernum);
     renderHost(status.host);
     renderSchedule(status.schedule);
+    renderServerSettings(status.settings);
     const updated = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     $('#metrics-updated').textContent = updated;
     $('#last-updated').textContent = updated;
@@ -114,6 +115,21 @@ const formatMetric = (metric, unit) => {
     if (metric === undefined || metric === null || metric === '') return '—';
     const numeric = Number(metric);
     return Number.isFinite(numeric) ? `${numeric.toFixed(numeric % 1 ? 1 : 0)} ${unit}` : '—';
+};
+
+const renderServerSettings = (settings = {}) => {
+    const entries = Object.entries(settings.values || {}).sort(([left], [right]) => left.localeCompare(right));
+    $('#server-settings-status').textContent = settings.available ? `${entries.length} settings` : 'Unavailable';
+    $('#server-settings-path').textContent = settings.path ? `Source: ${settings.path}` : (settings.error || 'Settings file unavailable');
+    if (!settings.available) {
+        $('#server-settings').innerHTML = `<div class="empty">${escapeHtml(settings.error || 'PalWorldSettings.ini is unavailable.')}</div>`;
+        return;
+    }
+    $('#server-settings').innerHTML = entries.map(([key, rawValue]) => {
+        const sensitive = /password|secret|token/i.test(key);
+        const displayValue = sensitive ? (rawValue ? 'Configured' : 'Not configured') : rawValue;
+        return `<div class="setting-item"><span>${escapeHtml(key)}</span><strong>${escapeHtml(displayValue || '—')}</strong></div>`;
+    }).join('');
 };
 
 const request = async (url, options = {}) => {

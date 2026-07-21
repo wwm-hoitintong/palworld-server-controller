@@ -30,7 +30,7 @@ const serveStatic = async (response, pathname, publicDir) => {
     }
 };
 
-const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client, hostMetrics, processManager, notifications, scheduler, shutdownController }, request, response) => {
+const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client, hostMetrics, processManager, notifications, scheduler, palworldSettings, shutdownController }, request, response) => {
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
     try {
         if (url.pathname === '/api/health') return sendJson(response, 200, { ok: true });
@@ -38,12 +38,13 @@ const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client,
         if (url.pathname === '/api/status' && request.method === 'GET') {
             const host = await hostMetrics.safeHostMetrics();
             const schedule = scheduler.getStatus();
-            if (config.demoMode) return sendJson(response, 200, { ...demoStatus, serverOnline: true, host, schedule });
+            const settings = await palworldSettings.getSettings();
+            if (config.demoMode) return sendJson(response, 200, { ...demoStatus, serverOnline: true, host, schedule, settings });
             try {
                 const [info, players, metrics] = await Promise.all([
                     client.call(endpoints.info), client.call(endpoints.players), client.call(endpoints.metrics)
                 ]);
-                return sendJson(response, 200, { serverOnline: true, info, players, metrics, host, schedule });
+                return sendJson(response, 200, { serverOnline: true, info, players, metrics, host, schedule, settings });
             } catch (error) {
                 return sendJson(response, 200, {
                     serverOnline: false,
@@ -52,7 +53,8 @@ const handleRequest = async ({ config, endpoints, demoStatus, publicDir, client,
                     players: { players: [] },
                     metrics: {},
                     host,
-                    schedule
+                    schedule,
+                    settings
                 });
             }
         }

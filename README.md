@@ -33,8 +33,11 @@ PALWORLD_START_WINDOW=19:30-20:30
 PALWORLD_STOP_WINDOW=01:00-01:30
 PALWORLD_SERVER_COMMAND=C:\PalServer\PalServer.exe
 PALWORLD_SERVER_CWD=C:\PalServer
+PALWORLD_SETTINGS_PATH=C:\PalServer\Pal\Saved\Config\WindowsServer\PalWorldSettings.ini
 PALWORLD_SERVER_ARGS_JSON=[]
 ```
+
+The dashboard also reads the live `PalWorldSettings.ini` file and shows its `OptionSettings` values in the dashboard. `PALWORLD_SETTINGS_PATH` can be customized when the server uses a non-default location; the default follows the server working directory and platform-specific `WindowsServer` or `LinuxServer` folder. Password-like settings are redacted in the browser.
 
 The current schedule is available at `/api/schedule`. The dashboard does not start the scheduler unless explicitly enabled, and it checks the REST API before starting to avoid launching a duplicate server. Use Windows Task Scheduler or a Windows service to start `npm start` at boot if the schedule must survive reboots.
 
