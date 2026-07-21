@@ -10,7 +10,10 @@ import { createScheduler } from './scheduler.js';
 
 const client = createPalworldClient({ config, endpoints });
 const hostMetrics = createHostMetrics();
-const notifications = createNotifications({ config });
+const notifications = createNotifications({
+  config,
+  announceInGame: (message) => client.call(endpoints.announce, { message })
+});
 const processManager = createPalworldProcess({ config, endpoints, client });
 const shutdownController = createShutdownController({ announceShutdown: notifications.announceShutdown });
 

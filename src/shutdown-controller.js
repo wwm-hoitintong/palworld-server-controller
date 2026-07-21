@@ -1,21 +1,25 @@
 import { scheduleShutdownNotices } from './scheduler.js';
 
-export function createShutdownController({ announceShutdown }) {
-  let cancelNotices = null;
+const scheduleShutdown = (state, delaySeconds) => {
+  state.cancelNotices?.();
+  state.cancelNotices = scheduleShutdownNotices({
+    delaySeconds,
+    announceShutdown: state.announceShutdown,
+    onError: (message) => console.error(message)
+  });
+};
 
-  function schedule(delaySeconds) {
-    cancelNotices?.();
-    cancelNotices = scheduleShutdownNotices({
-      delaySeconds,
-      announceShutdown,
-      onError: (message) => console.error(message)
-    });
-  }
+const cancelShutdown = (state) => {
+  state.cancelNotices?.();
+  state.cancelNotices = null;
+};
 
-  function cancel() {
-    cancelNotices?.();
-    cancelNotices = null;
-  }
+const createShutdownController = ({ announceShutdown }) => {
+  const state = { announceShutdown, cancelNotices: null };
+  return {
+    schedule: scheduleShutdown.bind(null, state),
+    cancel: cancelShutdown.bind(null, state)
+  };
+};
 
-  return { schedule, cancel };
-}
+export { createShutdownController };

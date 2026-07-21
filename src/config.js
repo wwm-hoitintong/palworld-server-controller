@@ -3,8 +3,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const srcDir = dirname(fileURLToPath(import.meta.url));
-export const projectRoot = join(srcDir, '..');
-export const publicDir = join(srcDir, 'public');
+const projectRoot = join(srcDir, '..');
+const publicDir = join(srcDir, 'public');
 
 const loadEnv = () =>{
   try {
@@ -71,4 +71,4 @@ const demoStatus = {
   metrics: { serverfps: 60, serverframetime: 16.7, currentplayernum: 2, maxplayernum: 32, uptime: 86400 * 2 + 7200, basecampnum: 4, days: 12 }
 };
 
-export {config, endpoints, demoStatus}
+export { config, demoStatus, endpoints, projectRoot, publicDir };
