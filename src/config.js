@@ -47,7 +47,7 @@ const config = {
     serverCommand: process.env.PALWORLD_SERVER_COMMAND || '',
     serverArgs: parseArgs(process.env.PALWORLD_SERVER_ARGS_JSON),
     serverCwd: process.env.PALWORLD_SERVER_CWD || '',
-    settingsPath: process.env.PALWORLD_SETTINGS_PATH || join(process.env.PALWORLD_SERVER_CWD || '', 'Pal', 'Saved', 'Config', process.platform === 'win32' ? 'WindowsServer' : 'LinuxServer', 'PalWorldSettings.ini'),
+    settingsPath: process.env.PALWORLD_SETTINGS_PATH || '',
     discordWebhookUrl: process.env.DISCORD_WEBHOOK_URL || '',
     discordUsername: process.env.DISCORD_WEBHOOK_USERNAME || 'Palworld Server Bot',
     startWindow: parseWindow(process.env.PALWORLD_START_WINDOW, ['19:30', '20:30']),

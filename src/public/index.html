@@ -44,19 +44,6 @@
       <p id="host-status" class="hint">Reading resources from the machine running this Node.js dashboard.</p>
     </section>
 
-    <section class="panel schedule-panel">
-      <div class="panel-heading"><span class="icon">◷</span><span>AUTOMATIC SCHEDULE</span><span id="schedule-status" class="tag">Disabled</span></div>
-      <div class="schedule-grid"><div><strong id="next-start">—</strong><span>Next random start</span></div><div><strong id="next-stop">—</strong><span>Next random stop</span></div></div>
-      <p id="schedule-hint" class="hint">Enable PALWORLD_SCHEDULE_ENABLED in .env to activate this schedule.</p>
-    </section>
-
-    <section class="panel settings-panel">
-      <div class="panel-heading"><span class="icon">⚙</span><span>PALWORLD SERVER CONFIGURATION</span><span id="server-settings-status" class="tag">Unavailable</span></div>
-      <p id="server-settings-path" class="hint">Loading PalWorldSettings.ini</p>
-      <div id="server-settings" class="settings-grid"><div class="setting-item"><span>Loading settings</span><strong>—</strong></div></div>
-      <p class="hint">Password-like values are redacted. Settings are read from the live PalWorldSettings.ini file.</p>
-    </section>
-
     <section class="content-grid">
       <article class="panel players-panel">
         <div class="panel-heading"><span class="icon">♙</span><span>PLAYERS</span><span id="last-updated" class="muted panel-end">—</span></div>
@@ -68,6 +55,20 @@
         <textarea id="announcement" rows="4" maxlength="200" placeholder="Server message..."></textarea>
         <button id="announce-button" class="button primary">Send announcement</button>
       </article>
+    </section>
+
+    <section class="panel schedule-panel">
+      <div class="panel-heading"><span class="icon">◷</span><span>AUTOMATIC SCHEDULE</span><span id="schedule-status" class="tag">Disabled</span></div>
+      <div class="schedule-grid"><div><strong id="next-start">—</strong><span>Next random start</span></div><div><strong id="next-stop">—</strong><span>Next random stop</span></div></div>
+      <p id="schedule-hint" class="hint">Enable PALWORLD_SCHEDULE_ENABLED in .env to activate this schedule.</p>
+    </section>
+
+     <section class="panel settings-panel">
+      <div class="panel-heading"><span class="icon">⚙</span><span>PALWORLD SERVER CONFIGURATION</span><span id="server-settings-status" class="tag">Unavailable</span></div>
+      <p id="server-settings-path" class="hint">Loading PalWorldSettings.ini</p>
+      <div id="server-settings" class="settings-grid"><div class="setting-item"><span>Loading settings</span><strong>—</strong></div></div>
+      <div class="settings-actions"><button id="stage-settings-button" class="button primary" disabled>Stage changes</button><span id="settings-pending" class="hint">Changes are written after Palworld is confirmed offline.</span></div>
+      <p class="hint">Password-like values are redacted. Changes remain staged in memory until manual or scheduled shutdown completes.</p>
     </section>
 
     <div id="toast" class="toast" role="status"></div>

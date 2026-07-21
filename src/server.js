@@ -11,13 +11,24 @@ import { createScheduler } from './scheduler.js';
 
 const client = createPalworldClient({ config, endpoints });
 const hostMetrics = createHostMetrics();
+const palworldSettings = createPalworldSettings({ config });
+const waitForOffline = config.demoMode ? async () => {} : client.waitForOffline;
 const notifications = createNotifications({
     config,
     announceInGame: (message) => client.call(endpoints.announce, { message })
 });
-const processManager = createPalworldProcess({ config, endpoints, client });
-const palworldSettings = createPalworldSettings({ config });
-const shutdownController = createShutdownController({ announceShutdown: notifications.announceShutdown });
+const shutdownController = createShutdownController({
+    announceShutdown: notifications.announceShutdown,
+    waitForOffline,
+    savePendingSettings: palworldSettings.savePendingSettings,
+    hasPendingSettings: palworldSettings.hasPendingSettings
+});
+const processManager = createPalworldProcess({
+    config,
+    endpoints,
+    client,
+    onShutdownRequested: (seconds) => shutdownController.schedule(seconds, { notices: false })
+});
 
 const scheduler = createScheduler({
     enabled: config.scheduleEnabled && !config.demoMode,

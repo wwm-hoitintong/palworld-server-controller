@@ -1,21 +1,47 @@
 import { scheduleShutdownNotices } from './scheduler.js';
 
-const scheduleShutdown = (state, delaySeconds) => {
+const finalizeShutdown = async (state) => {
+    if (!state.hasPendingSettings()) return;
+    try {
+        await state.waitForOffline();
+        const result = await state.savePendingSettings();
+        if (result.saved) console.log(`[settings] saved ${result.pendingKeys.length} setting changes after shutdown`);
+    } catch (error) {
+        console.error(`Settings save after shutdown failed: ${error.message}`);
+    } finally {
+        state.finalizeTimer = null;
+    }
+};
+
+const scheduleShutdown = (state, delaySeconds, { notices = true } = {}) => {
     state.cancelNotices?.();
-    state.cancelNotices = scheduleShutdownNotices({
-        delaySeconds,
-        announceShutdown: state.announceShutdown,
-        onError: (message) => console.error(message)
-    });
+    clearTimeout(state.finalizeTimer);
+    if (notices) {
+        state.cancelNotices = scheduleShutdownNotices({
+            delaySeconds,
+            announceShutdown: state.announceShutdown,
+            onError: (message) => console.error(message)
+        });
+    }
+    state.finalizeTimer = setTimeout(() => finalizeShutdown(state), Math.max(delaySeconds, 0) * 1000);
 };
 
 const cancelShutdown = (state) => {
     state.cancelNotices?.();
     state.cancelNotices = null;
+    clearTimeout(state.finalizeTimer);
+    state.finalizeTimer = null;
 };
 
-const createShutdownController = ({ announceShutdown }) => {
-    const state = { announceShutdown, cancelNotices: null };
+const createShutdownController = ({ announceShutdown, waitForOffline = async () => {}, savePendingSettings = async () => ({ saved: false }), hasPendingSettings = () => false }) => {
+    const state = {
+        announceShutdown,
+        waitForOffline,
+        savePendingSettings,
+        hasPendingSettings,
+        cancelNotices: null,
+        finalizeTimer: null
+    };
     return {
         schedule: scheduleShutdown.bind(null, state),
         cancel: cancelShutdown.bind(null, state)
