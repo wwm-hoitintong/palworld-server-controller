@@ -1,61 +1,61 @@
 import { spawn } from 'node:child_process';
 
 const launchPalworld = async ({ config, endpoints, client }) => {
-  if (config.demoMode) return { demo: true };
-  if (!config.serverCommand) throw new Error('PALWORLD_SERVER_COMMAND is not configured');
-  try {
-    await client.call(endpoints.info);
-    console.log('[palworld] REST API is already online; skipping process launch');
-    return { alreadyRunning: true };
-  } catch (error) {
-    if (error.status) {
-      throw new Error(`Palworld REST API returned HTTP ${error.status} before startup; check PALWORLD_API_URL and credentials`);
+    if (config.demoMode) return { demo: true };
+    if (!config.serverCommand) throw new Error('PALWORLD_SERVER_COMMAND is not configured');
+    try {
+        await client.call(endpoints.info);
+        console.log('[palworld] REST API is already online; skipping process launch');
+        return { alreadyRunning: true };
+    } catch (error) {
+        if (error.status) {
+            throw new Error(`Palworld REST API returned HTTP ${error.status} before startup; check PALWORLD_API_URL and credentials`);
+        }
+        console.log(`[palworld] REST API is offline; launching ${config.serverCommand}`);
     }
-    console.log(`[palworld] REST API is offline; launching ${config.serverCommand}`);
-  }
-  console.log(`[palworld] spawn command: ${config.serverCommand}`);
-  console.log(`[palworld] spawn cwd: ${config.serverCwd || '(default)'}`);
-  const child = spawn(config.serverCommand, config.serverArgs, {
-    cwd: config.serverCwd || undefined,
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: false
-  });
-  await new Promise((resolve, reject) => {
-    child.once('spawn', resolve);
-    child.once('error', reject);
-  });
-  child.unref();
-  console.log('[palworld] process spawned; waiting for REST API readiness');
-  await client.waitForReady();
-  console.log('[palworld] REST API is ready');
-  return { started: true };
+    console.log(`[palworld] spawn command: ${config.serverCommand}`);
+    console.log(`[palworld] spawn cwd: ${config.serverCwd || '(default)'}`);
+    const child = spawn(config.serverCommand, config.serverArgs, {
+        cwd: config.serverCwd || undefined,
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: false
+    });
+    await new Promise((resolve, reject) => {
+        child.once('spawn', resolve);
+        child.once('error', reject);
+    });
+    child.unref();
+    console.log('[palworld] process spawned; waiting for REST API readiness');
+    await client.waitForReady();
+    console.log('[palworld] REST API is ready');
+    return { started: true };
 };
 
 const startPalworld = async ({ config, endpoints, client, state }) => {
-  if (state.startPromise) return state.startPromise;
-  state.startPromise = launchPalworld({ config, endpoints, client });
-  try {
-    return await state.startPromise;
-  } finally {
-    state.startPromise = null;
-  }
+    if (state.startPromise) return state.startPromise;
+    state.startPromise = launchPalworld({ config, endpoints, client });
+    try {
+        return await state.startPromise;
+    } finally {
+        state.startPromise = null;
+    }
 };
 
 const stopPalworld = async ({ config, endpoints, client }) => {
-  if (config.demoMode) return { demo: true };
-  await client.call(endpoints.shutdown, { waittime: 30 });
-  console.log('Requested scheduled Palworld shutdown');
-  return { shutdownRequested: true };
+    if (config.demoMode) return { demo: true };
+    await client.call(endpoints.shutdown, { waittime: 30 });
+    console.log('Requested scheduled Palworld shutdown');
+    return { shutdownRequested: true };
 };
 
 const createPalworldProcess = ({ config, endpoints, client }) => {
-  const state = { startPromise: null };
-  const context = { config, endpoints, client, state };
-  return {
-    start: startPalworld.bind(null, context),
-    stop: stopPalworld.bind(null, context)
-  };
+    const state = { startPromise: null };
+    const context = { config, endpoints, client, state };
+    return {
+        start: startPalworld.bind(null, context),
+        stop: stopPalworld.bind(null, context)
+    };
 };
 
 export { createPalworldProcess };
