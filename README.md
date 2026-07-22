@@ -91,6 +91,8 @@ PALWORLD_BACKUP_TIMEOUT_MS=600000
 
 The remote name (`gdrive` above) and destination folder must match your rclone configuration. The dashboard never receives or stores Google credentials; rclone handles authentication. In demo mode, Palworld is not contacted, but a configured save path and rclone remote can still be tested with the mock shutdown flow. Backups do not run if the dashboard process is terminated before shutdown finalization completes.
 
+When `PALWORLD_BACKUP_ENABLED=true`, a **manual** Start server action checks the timestamped backups in the configured rclone remote. If a backup contains files newer than the local save files, the dashboard asks whether to load it before starting Palworld. An accepted restore first downloads the backup to a temporary directory and keeps the previous local save in a `.before-restore-*` folder. If the backup check fails, the server starts with the local save and displays a warning. Scheduled starts do not perform this check or restore prompt; they use the existing automatic start behavior unchanged.
+
 Google Drive should not be the only backup. For a stronger 3-2-1 setup, keep a second copy on an external disk or NAS, using a separate rclone remote or a scheduled `restic` backup.
 
 The current schedule is available at `/api/schedule`. The dashboard does not start the scheduler unless explicitly enabled, and it checks the REST API before starting to avoid launching a duplicate server. Use Windows Task Scheduler or a Windows service to start `npm start` at boot if the schedule must survive reboots.

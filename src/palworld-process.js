@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-const launchPalworld = async ({ config, endpoints, client }) => {
+const launchPalworld = async ({ config, endpoints, client, beforeLaunch }) => {
     if (config.demoMode) return { demo: true };
     if (!config.serverCommand) throw new Error('PALWORLD_SERVER_COMMAND is not configured');
     try {
@@ -13,6 +13,7 @@ const launchPalworld = async ({ config, endpoints, client }) => {
         }
         console.log(`[palworld] REST API is offline; launching ${config.serverCommand}`);
     }
+    const preparation = beforeLaunch ? await beforeLaunch() : null;
     console.log(`[palworld] spawn command: ${config.serverCommand}`);
     console.log(`[palworld] spawn cwd: ${config.serverCwd || '(default)'}`);
     const child = spawn(config.serverCommand, config.serverArgs, {
@@ -29,12 +30,12 @@ const launchPalworld = async ({ config, endpoints, client }) => {
     console.log('[palworld] process spawned; waiting for REST API readiness');
     await client.waitForReady();
     console.log('[palworld] REST API is ready');
-    return { started: true };
+    return { started: true, ...(preparation || {}) };
 };
 
-const startPalworld = async ({ config, endpoints, client, state }) => {
+const startPalworld = async ({ config, endpoints, client, state }, options = {}) => {
     if (state.startPromise) return state.startPromise;
-    state.startPromise = launchPalworld({ config, endpoints, client });
+    state.startPromise = launchPalworld({ config, endpoints, client, beforeLaunch: options.beforeLaunch });
     try {
         return await state.startPromise;
     } finally {
