@@ -62,7 +62,8 @@ const requestHandler = createRequestHandler({
     notifications,
     scheduler,
     palworldSettings,
-    shutdownController
+    shutdownController,
+    saveBackup
 });
 
 const server = http.createServer(requestHandler);

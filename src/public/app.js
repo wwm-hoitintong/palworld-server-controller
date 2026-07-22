@@ -182,6 +182,49 @@ const action = async (action, payload = {}) => {
         await refresh();
     } catch (error) { showToast(error.message, 'error'); }
 };
+const formatBackupTime = (timestamp) => timestamp
+    ? new Date(timestamp).toLocaleString()
+    : 'a newer time';
+
+const startServer = async () => {
+    const button = $('#start-button');
+    button.disabled = true;
+    try {
+        let result = await request('/api/action', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'start' })
+        });
+        let data = result.data || {};
+        if (data.needsRestoreConfirmation && data.restoreCandidate) {
+            const candidate = data.restoreCandidate;
+            const restore = window.confirm(
+                `A newer Palworld save backup was found (${formatBackupTime(candidate.saveTime || candidate.backupTime)}). Load it before starting the server?`
+            );
+            result = await request('/api/action', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'start',
+                    restore,
+                    snapshot: candidate.name
+                })
+            });
+            data = result.data || {};
+        }
+        if (data.restored) {
+            showToast('Newer save backup loaded; server started');
+        } else if (data.backupCheckWarning) {
+            showToast(data.backupCheckWarning, 'error');
+        } else {
+            showToast('Start request sent');
+        }
+        await refresh();
+    } catch (error) {
+        showToast(error.message, 'error');
+    } finally {
+        button.disabled = false;
+    }
+};
+
 $('#server-settings').addEventListener('input', (event) => {
     const input = event.target.closest('[data-setting-key]');
     if (!input) return;
@@ -192,9 +235,7 @@ $('#stage-settings-button').addEventListener('click', stageSettings);
 
 $('#start-button').addEventListener('click', async () => {
     if (!window.confirm('Launch the configured Palworld server?')) return;
-    const button = $('#start-button');
-    button.disabled = true;
-    await action('start');
+    await startServer();
 });
 
 $('#announce-button').addEventListener('click', async () => {
