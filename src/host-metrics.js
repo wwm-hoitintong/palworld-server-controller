@@ -51,10 +51,23 @@ const networkTotals = async () => {
     return { rx: 0, tx: 0 };
 };
 
+const safeNetworkTotals = async (networkState) => {
+    try {
+        const totals = await networkTotals();
+        networkState.networkErrorLogged = false;
+        return totals;
+    } catch (error) {
+        if (!networkState.networkErrorLogged) {
+            console.error('Network metrics unavailable:', error.message);
+            networkState.networkErrorLogged = true;
+        }
+        return null;
+    }
+};
+
 const getHostMetrics = async (networkState) => {
-    const [cpuPercent, totals] = await Promise.all([currentCpuPercent(), networkTotals()]);
+    const [cpuPercent, totals] = await Promise.all([currentCpuPercent(), safeNetworkTotals(networkState)]);
     const now = Date.now();
-    const elapsed = networkState.timestamp ? Math.max((now - networkState.timestamp) / 1000, 0.001) : 0;
     const host = {
         cpuPercent,
         memory: {
@@ -64,6 +77,8 @@ const getHostMetrics = async (networkState) => {
         },
         network: { rxBytesPerSec: 0, txBytesPerSec: 0 }
     };
+    if (!totals) return host;
+    const elapsed = networkState.timestamp ? Math.max((now - networkState.timestamp) / 1000, 0.001) : 0;
     if (elapsed) {
         host.network.rxBytesPerSec = Math.max(0, Math.round((totals.rx - networkState.rx) / elapsed));
         host.network.txBytesPerSec = Math.max(0, Math.round((totals.tx - networkState.tx) / elapsed));
