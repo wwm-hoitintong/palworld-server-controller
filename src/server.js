@@ -6,12 +6,14 @@ import { createPalworldClient } from './palworld-client.js';
 import { createPalworldProcess } from './palworld-process.js';
 import { createPalworldSettings } from './palworld-settings.js';
 import { createRequestHandler } from './routes.js';
+import { createSaveBackup } from './save-backup.js';
 import { createShutdownController } from './shutdown-controller.js';
 import { createScheduler } from './scheduler.js';
 
 const client = createPalworldClient({ config, endpoints });
 const hostMetrics = createHostMetrics();
 const palworldSettings = createPalworldSettings({ config });
+const saveBackup = createSaveBackup({ config });
 const waitForOffline = config.demoMode ? async () => {} : client.waitForOffline;
 const notifications = createNotifications({
     config,
@@ -21,7 +23,9 @@ const shutdownController = createShutdownController({
     announceShutdown: notifications.announceShutdown,
     waitForOffline,
     savePendingSettings: palworldSettings.savePendingSettings,
-    hasPendingSettings: palworldSettings.hasPendingSettings
+    hasPendingSettings: palworldSettings.hasPendingSettings,
+    backupSave: saveBackup.backup,
+    backupEnabled: saveBackup.enabled
 });
 const processManager = createPalworldProcess({
     config,
