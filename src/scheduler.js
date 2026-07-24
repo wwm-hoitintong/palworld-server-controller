@@ -1,38 +1,38 @@
 const shutdownNoticeSeconds = [1800, 600, 300, 30, 1];
+
 const parseTime = (value, fallback) => {
     const match = String(value || fallback).match(/^(\d{1,2}):(\d{2})$/);
-    if (!match) throw new Error(`Invalid schedule time: ${value}`);
-    return { hour: Math.min(Number(match[1]), 23), minute: Math.min(Number(match[2]), 59) };
+    const hour = Number(match?.[1]);
+    const minute = Number(match?.[2]);
+    if (!match || hour > 23 || minute > 59) throw new Error(`Invalid schedule time: ${value}`);
+    return { hour, minute };
+};
+
+const normalizeWindow = (window, fallback) => {
+    if (!Array.isArray(window) || window.length !== 2) throw new Error('Schedule windows must contain a start and end time');
+    const parsed = window.map((value) => parseTime(value, fallback));
+    return parsed.map(({ hour, minute }) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
 };
 
 const randomDate = (windowStart, windowEnd, now = new Date(), nextCycle = false) => {
     const start = new Date(now);
     start.setHours(windowStart.hour, windowStart.minute, 0, 0);
-
     const end = new Date(now);
     end.setHours(windowEnd.hour, windowEnd.minute, 0, 0);
     if (end < start) end.setDate(end.getDate() + 1);
-
     if (nextCycle || now > end) {
         start.setDate(start.getDate() + 1);
         end.setDate(end.getDate() + 1);
-    } else if (now > start) {
-        start.setTime(now.getTime());
-    }
-
+    } else if (now > start) start.setTime(now.getTime());
     const range = Math.max(end.getTime() - start.getTime(), 0);
     return new Date(start.getTime() + Math.floor(Math.random() * (range + 1)));
 };
 
-
-
-const scheduleShutdownNotices = ({ delaySeconds, announceShutdown = async () => { }, onError = console.error }) => {
-    const timers = shutdownNoticeSeconds
-        .filter((seconds) => seconds <= delaySeconds)
-        .map((seconds) => {
-            const delay = Math.max(delaySeconds - seconds, 0) * 1000;
-            return setTimeout(() => announceShutdown(seconds).catch((error) => onError(`Shutdown notice failed: ${error.message}`)), delay);
-        });
+const scheduleShutdownNotices = ({ delaySeconds, announceShutdown = async () => {}, onError = console.error }) => {
+    const timers = shutdownNoticeSeconds.filter((seconds) => seconds <= delaySeconds).map((seconds) => {
+        const delay = Math.max(delaySeconds - seconds, 0) * 1000;
+        return setTimeout(() => announceShutdown(seconds).catch((error) => onError(`Shutdown notice failed: ${error.message}`)), delay);
+    });
     return () => timers.forEach(clearTimeout);
 };
 
@@ -58,19 +58,17 @@ const run = async (state, kind) => {
         if (kind === 'start') {
             const result = await state.startServer();
             state.lastRun.start = { at: new Date().toISOString(), result };
-            console.log(`[scheduler] start completed: ${JSON.stringify(result)}`);
             await state.announceStarted();
         } else {
             const result = await state.stopServer();
             state.lastRun.stop = { at: new Date().toISOString(), result };
-            console.log(`[scheduler] stop completed: ${JSON.stringify(result)}`);
         }
         state.lastError = null;
     } catch (error) {
         state.lastError = { at: new Date().toISOString(), kind, message: error.message };
         state.onError(`Scheduled ${kind} failed: ${error.stack || error.message}`);
     } finally {
-        schedule(state, kind, true);
+        if (state.running) schedule(state, kind, true);
     }
 };
 
@@ -87,6 +85,32 @@ const stopScheduler = (state) => {
     state.timers.cancelNotices?.();
     state.timers.cancelNotices = null;
     state.running = false;
+    state.next.start = null;
+    state.next.stop = null;
+};
+
+const updateSchedule = (state, changes) => {
+    const enabled = changes.enabled === undefined ? state.enabled : Boolean(changes.enabled);
+    const startWindow = normalizeWindow(changes.startWindow || state.startWindow, ['19:30', '20:30']);
+    const stopWindow = normalizeWindow(changes.stopWindow || state.stopWindow, ['01:00', '01:30']);
+    stopScheduler(state);
+    state.enabled = enabled;
+    state.startWindow = startWindow;
+    state.stopWindow = stopWindow;
+    state.windows = {
+        start: [parseTime(startWindow[0]), parseTime(startWindow[1])],
+        stop: [parseTime(stopWindow[0]), parseTime(stopWindow[1])]
+    };
+    if (enabled) startScheduler(state);
+};
+
+const skipNext = (state, kind) => {
+    if (!['start', 'stop'].includes(kind)) throw new Error('Schedule kind must be start or stop');
+    if (!state.running || !state.next[kind]) return false;
+    clearTimeout(state.timers[kind]);
+    if (kind === 'stop') state.timers.cancelNotices?.();
+    schedule(state, kind, true);
+    return true;
 };
 
 const getScheduleStatus = (state) => ({
@@ -101,19 +125,21 @@ const getScheduleStatus = (state) => ({
     stopWindow: state.stopWindow.join('–')
 });
 
-const createScheduler = ({ enabled, startWindow, stopWindow, startServer, stopServer, announceStarted = async () => { }, announceShutdown = async () => { }, onError = console.error }) => {
+const createScheduler = ({ enabled, startWindow, stopWindow, startServer, stopServer, announceStarted = async () => {}, announceShutdown = async () => {}, onError = console.error }) => {
+    const initialStart = normalizeWindow(startWindow || ['19:30', '20:30'], ['19:30', '20:30']);
+    const initialStop = normalizeWindow(stopWindow || ['01:00', '01:30'], ['01:00', '01:30']);
     const state = {
-        enabled,
-        startWindow,
-        stopWindow,
+        enabled: Boolean(enabled),
+        startWindow: initialStart,
+        stopWindow: initialStop,
         startServer,
         stopServer,
         announceStarted,
         announceShutdown,
         onError,
         windows: {
-            start: [parseTime(startWindow?.[0], '19:30'), parseTime(startWindow?.[1], '20:30')],
-            stop: [parseTime(stopWindow?.[0], '01:00'), parseTime(stopWindow?.[1], '01:30')]
+            start: [parseTime(initialStart[0]), parseTime(initialStart[1])],
+            stop: [parseTime(initialStop[0]), parseTime(initialStop[1])]
         },
         timers: { start: null, stop: null, cancelNotices: null },
         next: { start: null, stop: null },
@@ -124,6 +150,8 @@ const createScheduler = ({ enabled, startWindow, stopWindow, startServer, stopSe
     return {
         start: startScheduler.bind(null, state),
         stop: stopScheduler.bind(null, state),
+        update: updateSchedule.bind(null, state),
+        skip: skipNext.bind(null, state),
         getStatus: getScheduleStatus.bind(null, state)
     };
 };

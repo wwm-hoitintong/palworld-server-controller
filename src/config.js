@@ -49,6 +49,9 @@ const config = {
     serverCwd: process.env.PALWORLD_SERVER_CWD || '',
     settingsPath: process.env.PALWORLD_SETTINGS_PATH || '',
     backupEnabled: process.env.PALWORLD_BACKUP_ENABLED === 'true',
+    backupRetention: Number.isFinite(Number(process.env.PALWORLD_BACKUP_RETENTION))
+        ? Math.max(1, Number(process.env.PALWORLD_BACKUP_RETENTION))
+        : 14,
     savePath: process.env.PALWORLD_SAVE_PATH || '',
     backupRemote: process.env.PALWORLD_BACKUP_REMOTE || '',
     rcloneCommand: process.env.RCLONE_COMMAND || 'rclone',

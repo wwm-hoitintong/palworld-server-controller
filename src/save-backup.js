@@ -87,11 +87,45 @@ const getRemoteSaveInfo = async (config, snapshot) => {
         '--files-only'
     ]);
     const files = stdout.trim() ? JSON.parse(stdout) : [];
-    const latestMtime = files.reduce((latest, file) => {
+    const details = files.reduce((result, file) => {
         const mtime = Date.parse(file.ModTime || '');
-        return Number.isFinite(mtime) ? Math.max(latest, mtime) : latest;
-    }, 0);
-    return { fileCount: files.length, latestMtime };
+        return {
+            fileCount: result.fileCount + 1,
+            totalBytes: result.totalBytes + (Number(file.Size) || 0),
+            latestMtime: Number.isFinite(mtime) ? Math.max(result.latestMtime, mtime) : result.latestMtime
+        };
+    }, { fileCount: 0, totalBytes: 0, latestMtime: 0 });
+    return details;
+};
+
+const listBackups = async ({ config }) => {
+    if (!config.backupEnabled) return { enabled: false, backups: [] };
+    assertBackupConfig(config);
+    const snapshots = await listSnapshots(config);
+    const backups = [];
+    for (const snapshot of snapshots) {
+        const remote = await getRemoteSaveInfo(config, snapshot);
+        backups.push({
+            name: snapshot.name,
+            backupTime: snapshot.createdAt.toISOString(),
+            fileCount: remote.fileCount,
+            sizeBytes: remote.totalBytes,
+            saveTime: remote.latestMtime ? new Date(remote.latestMtime).toISOString() : null,
+            valid: remote.fileCount > 0
+        });
+    }
+    return { enabled: true, backups };
+};
+
+const pruneBackups = async ({ config }) => {
+    if (!config.backupEnabled) return { pruned: 0, retained: 0 };
+    const snapshots = await listSnapshots(config);
+    const stale = snapshots.slice(Math.max(1, config.backupRetention));
+    for (const snapshot of stale) {
+        await runRclone(config, ['purge', `${getRemoteRoot(config)}/${snapshot.name}`]);
+        console.log(`[backup] pruned snapshot=${snapshot.name}`);
+    }
+    return { pruned: stale.length, retained: snapshots.length - stale.length };
 };
 
 const findNewerSnapshot = async ({ config }) => {
@@ -221,13 +255,29 @@ const backupSave = async ({ config }) => {
         destination,
         '--create-empty-src-dirs'
     ]);
-    console.log(`[backup] upload-success snapshot=${snapshotName}`);
-    return { enabled: true, backedUp: true, destination };
+    const verification = await getRemoteSaveInfo(config, { name: snapshotName });
+    if (!verification.fileCount) {
+        throw new Error('Backup upload completed but the remote snapshot is empty');
+    }
+    const retention = await pruneBackups({ config });
+    console.log(`[backup] upload-success snapshot=${snapshotName} files=${verification.fileCount}`);
+    return {
+        enabled: true,
+        backedUp: true,
+        destination,
+        snapshotName,
+        fileCount: verification.fileCount,
+        sizeBytes: verification.totalBytes,
+        pruned: retention.pruned
+    };
 };
 
 const createSaveBackup = ({ config }) => ({
     enabled: config.backupEnabled,
+    retention: config.backupRetention,
     backup: backupSave.bind(null, { config }),
+    list: listBackups.bind(null, { config }),
+    prune: pruneBackups.bind(null, { config }),
     findNewerSnapshot: findNewerSnapshot.bind(null, { config }),
     restoreSnapshot: restoreSnapshot.bind(null, { config })
 });

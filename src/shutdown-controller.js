@@ -3,6 +3,7 @@ import { scheduleShutdownNotices } from './scheduler.js';
 const finalizeShutdown = async (state) => {
     if (!state.hasPendingSettings() && !state.backupEnabled) {
         state.finalizeTimer = null;
+        state.finalizeAt = null;
         return;
     }
     try {
@@ -10,6 +11,7 @@ const finalizeShutdown = async (state) => {
     } catch (error) {
         console.error(`Shutdown finalization skipped because Palworld did not go offline: ${error.message}`);
         state.finalizeTimer = null;
+        state.finalizeAt = null;
         return;
     }
     if (state.hasPendingSettings()) {
@@ -29,7 +31,15 @@ const finalizeShutdown = async (state) => {
         }
     }
     state.finalizeTimer = null;
+    state.finalizeAt = null;
 };
+
+const getShutdownStatus = (state) => ({
+    scheduled: Boolean(state.finalizeTimer),
+    dueAt: state.finalizeAt ? new Date(state.finalizeAt).toISOString() : null,
+    pendingSettings: state.hasPendingSettings(),
+    backupEnabled: state.backupEnabled
+});
 
 const scheduleShutdown = (state, delaySeconds, { notices = true } = {}) => {
     state.cancelNotices?.();
@@ -41,6 +51,7 @@ const scheduleShutdown = (state, delaySeconds, { notices = true } = {}) => {
             onError: (message) => console.error(message)
         });
     }
+    state.finalizeAt = Date.now() + Math.max(delaySeconds, 0) * 1000;
     state.finalizeTimer = setTimeout(() => finalizeShutdown(state), Math.max(delaySeconds, 0) * 1000);
 };
 
@@ -49,6 +60,7 @@ const cancelShutdown = (state) => {
     state.cancelNotices = null;
     clearTimeout(state.finalizeTimer);
     state.finalizeTimer = null;
+    state.finalizeAt = null;
 };
 
 const createShutdownController = ({ announceShutdown, waitForOffline = async () => {}, savePendingSettings = async () => ({ saved: false }), hasPendingSettings = () => false, backupSave = async () => ({ backedUp: false }), backupEnabled = false }) => {
@@ -60,11 +72,13 @@ const createShutdownController = ({ announceShutdown, waitForOffline = async () 
         backupSave,
         backupEnabled,
         cancelNotices: null,
-        finalizeTimer: null
+        finalizeTimer: null,
+        finalizeAt: null
     };
     return {
         schedule: scheduleShutdown.bind(null, state),
-        cancel: cancelShutdown.bind(null, state)
+        cancel: cancelShutdown.bind(null, state),
+        getStatus: getShutdownStatus.bind(null, state)
     };
 };
 
