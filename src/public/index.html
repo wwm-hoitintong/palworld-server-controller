@@ -20,6 +20,11 @@
       </div>
     </header>
 
+    <section class="panel operation-panel">
+      <div class="panel-heading"><span class="icon">◉</span><span>OPERATION STATUS</span><span id="operation-status" class="tag">Idle</span></div>
+      <div class="operation-grid"><div><strong id="operation-kind">No active operation</strong><span id="operation-detail">Actions are ready.</span></div><div><strong id="process-status">—</strong><span>Process state</span></div><div><strong id="shutdown-status">—</strong><span>Shutdown finalization</span></div></div>
+    </section>
+
     <section class="hero-grid">
       <article class="panel server-card">
         <div class="panel-heading"><span class="icon">✦</span><span>WORLD STATUS</span><span id="server-version" class="tag">—</span></div>
@@ -29,7 +34,7 @@
       <article class="panel action-card">
         <div class="panel-heading"><span class="icon">⚡</span><span>QUICK ACTIONS</span></div>
         <div class="action-row"><button id="start-button" class="button primary">Start server</button><button data-action="save" class="button secondary">Save world</button><button id="shutdown-button" class="button danger">Shutdown</button></div>
-        <p class="hint">Start launches the configured Palworld executable. Shutdown asks how many minutes to wait before stopping.</p>
+        <p class="hint">Actions are serialized to prevent conflicting starts, stops, restores, and backups.</p>
       </article>
     </section>
 
@@ -57,13 +62,26 @@
       </article>
     </section>
 
+    <section class="panel console-panel">
+      <div class="panel-heading"><span class="icon">▤</span><span>LIVE SERVER CONSOLE</span><span id="console-status" class="tag">0 lines</span></div>
+      <pre id="console-lines" class="console-output">Waiting for Palworld process output...</pre>
+      <p class="hint">The console keeps the latest 500 process lines in memory. Refresh the dashboard to update it.</p>
+    </section>
+
+    <section class="panel backup-panel">
+      <div class="panel-heading"><span class="icon">◆</span><span>SAVE BACKUPS</span><span id="backup-status" class="tag">Disabled</span></div>
+      <div class="backup-actions"><button id="backup-now-button" class="button secondary">Backup now</button><button id="prune-backups-button" class="button compact">Apply retention</button><span id="backup-hint" class="hint">Backups are verified after upload.</span></div>
+      <div id="backups" class="backup-list"><div class="empty">Loading backups...</div></div>
+    </section>
+
     <section class="panel schedule-panel">
       <div class="panel-heading"><span class="icon">◷</span><span>AUTOMATIC SCHEDULE</span><span id="schedule-status" class="tag">Disabled</span></div>
       <div class="schedule-grid"><div><strong id="next-start">—</strong><span>Next random start</span></div><div><strong id="next-stop">—</strong><span>Next random stop</span></div></div>
-      <p id="schedule-hint" class="hint">Enable PALWORLD_SCHEDULE_ENABLED in .env to activate this schedule.</p>
+      <div class="schedule-editor"><label><input id="schedule-enabled" type="checkbox"> Enable schedule</label><label>Start window <input id="start-window" class="setting-input" type="text" placeholder="19:30-20:30"></label><label>Stop window <input id="stop-window" class="setting-input" type="text" placeholder="01:00-01:30"></label><button id="save-schedule-button" class="button primary">Save schedule</button><button id="skip-start-button" class="button compact">Skip next start</button><button id="skip-stop-button" class="button compact">Skip next stop</button></div>
+      <p id="schedule-hint" class="hint">Schedule changes apply immediately and last until the dashboard restarts.</p>
     </section>
 
-     <section class="panel settings-panel">
+    <section class="panel settings-panel">
       <div class="panel-heading"><span class="icon">⚙</span><span>PALWORLD SERVER CONFIGURATION</span><span id="server-settings-status" class="tag">Unavailable</span></div>
       <p id="server-settings-path" class="hint">Loading PalWorldSettings.ini</p>
       <div id="server-settings" class="settings-grid"><div class="setting-item"><span>Loading settings</span><strong>—</strong></div></div>
